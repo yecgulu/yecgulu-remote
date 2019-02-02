@@ -11,21 +11,39 @@ import bs4
 #import os
 from bs4 import BeautifulSoup
 from pyquery import PyQuery as pq
-
+import time
+#import numpy as np
 
 list1 = []
 list_address = []
 num = 0
 stop = 0
 #def 抓网页
-def getHTML(url):
-    try:
-        r = requests.get(url, timeout = 5)
-        r.raise_for_status()
-        r.encoding = r.apparent_encoding
-        return r.text
-    except:
-        return  ""
+def getHTML(url,*n):
+    if n:
+        try:
+            head = {'user-agent':'Mozilla/5.0'}
+            kv = {'act':'jzb','page':n}
+            r = requests.get(url, headers=head,params=kv, timeout = 5)
+            r.raise_for_status()
+            
+            r.encoding = 'GB2312'
+            #r.encoding = r.apparent_encoding
+            return r.text
+        except:
+            return  print("爬取失败")
+    else:
+        try:
+            head = {'user-agent':'Mozilla/5.0'}
+            
+            r = requests.get(url, headers=head, timeout = 5)
+            r.raise_for_status()
+            
+            r.encoding = 'GB2312'
+            #r.encoding = r.apparent_encoding
+            return r.text
+        except:
+            return  print("爬取失败")
 
 
 #def 分析网页内容
@@ -54,21 +72,27 @@ def fillPARSER(list1, html):
 def fillPquery(list1,html,index):
 
     doc = pq(html)
+    list1[index].append('')
+    list1[index].append('')
+    
     for i in doc('div.gkzwfl ul li span.zwxxbt'):
+        
+        
         if i.text=='学历':
             index_xl =doc('div.gkzwfl ul li span.zwxxbt').index(i)
             xl = doc('div.gkzwfl ul li span.zwxxbt').siblings()[index_xl].text
-            list1[index].append(xl)
+            list1[index][7] = xl
+            print(list1[index][7])
         if i.text=='专业':
             index_zy =doc('div.gkzwfl ul li span.zwxxbt').index(i)
             zy = doc('div.gkzwfl ul li span.zwxxbt').siblings()[index_zy].text
-            list1[index].append(zy)
-        print(list1[index][7])
-        print(list1[index][8])
-
+            list1[index][8] = zy
+            print(list1[index][8])
+              
 
 #def 输出到文件
 def printLIST(list1, num):
+    
     output = open("list2.txt", "w+")
     for i in range(num):
         ls=list1[i]
@@ -94,12 +118,12 @@ def printLIST(list1, num):
     output1.close
     
 def main():
-    
+    time_start=time.time()
     for page in range(483):
         page1 = page + 1
-        url = "http://ah.huatu.com/zw/rank/?act=jzb&page="+str(page1)
+        url = "http://ah.huatu.com/zw/rank/"
         if stop != 1:
-            html = getHTML(url)
+            html = getHTML(url,page1)
             fillPARSER(list1, html)
             print(page1)
             print(num)
@@ -114,11 +138,14 @@ def main():
     for i in list_address:
         print(i)
         index = list_address.index(i)
-        print(index)
+        print(index+1)
         htmlDetail=getHTML(i)
+        
         fillPquery(list1,htmlDetail,index)
             
     printLIST(list1,num)
        
         
+    time_end=time.time()
+    print('totally cost',time_end-time_start)
 main()        
